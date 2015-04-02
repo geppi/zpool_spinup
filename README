@@ -1,0 +1,100 @@
+***** README for zpool_spinupd *****
+
+Distribution of zpool_spinupd, a daemon for monitoring the wake up of
+zpool disks and spinning up associated zpool member disks in parallel.
+
+
+
+Standard disclaimer / warning:
+------------------------------
+
+The software in this distribution is provided as is, without any support,
+without any guarantee to work and without any guarantee to be free of bugs
+or malfunction. Use at your own risk and never on production systems!
+
+
+
+Files:
+------
+
+README              : This file, containing general information and
+                      the installation instructions.
+OPENSOLARIS.LICENSE : CDDL 1.0 Licence.
+zpool_spinupd       : Startup shell script for the daemon.
+zpool_spinupd.pl    : Perl script that implements the daemon.
+                      !!! Should be renamed to zpool_spinupd during installation !!!
+zpool_spinupd.xml   : Manifest file for the Service Management Framework (SMF).
+
+
+
+General Information:
+--------------------
+
+- The daemon requires the "sdparm" utility for spinning up disks.
+  The utility is assumed to be located at "/usr/bin/sdparm".
+  This can be changed with the $SDPARM variable in "zpool_spinupd.pl".
+
+- The daemon is logging into "/var/log/zpool_spinupd.log".
+  This can be changed with the $LOGFILE variable in "zpool_spinupd.pl".
+
+- The Perl script which implements the daemon is assumed to be installed
+  as "/usr/local/lib/zpool_spinup/zpool_spinupd".
+  This can be changed with the DAEMON variable in "zpool_spinupd".
+
+- The process ID of the daemon is written into "/var/run/zpool_spinupd.pid".
+  This can be changed with the PIDFILE variable in "zpool_spinupd".
+  The file is created upon daemon startup and removed when the daemon exits.
+  Note that the name of the daemon process reported by the "ps" command is
+  "dtrace" since the Solaris dtrace utility is used to monitor the wake up
+  of devices via a kernel probe.
+
+- The DTrace probe used for monitoring is from the Function Boundary Tracing (FBT) provider.
+  This is an unstable provider which means that the interface can change from one
+  minor release of the operating system to another. It might even change with a patch
+  and the monitor daemon could cease to work.
+
+
+
+Installation instructions:
+--------------------------
+
+1. Become root or sudo.
+2. Copy the startup script "zpool_spinupd" to "/etc/init.d/zpool_spinupd"
+   and set execute permissions:
+
+      cp zpool_spinupd /etc/init.d/zpool_spinupd
+      chmod 754 /etc/init.d/zpool_spinupd
+
+3. Create a directory "zpool_spinup" under "/usr/local/lib":
+
+      mkdir /usr/local/lib/zpool_spinup
+
+4. Copy the Perl script "zpool_spinupd.pl" that implements the daemon
+   to "/usr/local/lib/zpool_spinup/zpool_spinupd" and set execute permissions:
+
+      cp zpool_spinupd.pl /usr/local/lib/zpool_spinup/zpool_spinupd
+      chmod 754 /usr/local/lib/zpool_spinup/zpool_spinupd
+
+5. To start the zpool_spinup monitoring daemon at bootup we put it under the
+   control of the OpenSolaris Service Management Framework (SMF).
+   Copy the "zpool_spinupd.xml" file to "/var/svc/manifest/site/zpool_spinupd.xml",
+   change the file ownership to root:sys and import it into the service configuration repository:
+
+      cp zpool_spinupd.xml /var/svc/manifest/site/zpool_spinupd.xml
+      chown root:sys /var/svc/manifest/site/zpool_spinupd.xml
+      svccfg -v import /var/svc/manifest/site/zpool_spinupd.xml
+
+6. Check that the service is running with:
+
+      svcs zpool_spinupd
+
+7. The service can be enabled with:
+
+      svcadm enable zpool_spinupd
+
+   or disabled with:
+
+      svcadm disable zpool_spinupd
+
+
+***** End of README for zpool_spinupd *****
